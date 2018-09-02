@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 pub trait Zone {
     fn get_coords(&self, id: &Uuid) -> Option<&Point>;
-    fn put_coords(&mut self, id: Uuid, coords: Point) -> ();
+    fn put_coords(&mut self, id: &Uuid, coords: Point) -> ();
     fn list_all(&self) -> Vec<(&Uuid, &Point)>;
 }
 
@@ -25,8 +25,8 @@ impl Zone for HashZone {
         self.beings.get(id)
     }
 
-    fn put_coords(&mut self, id: Uuid, coords: Point) {
-        self.beings.insert(id, coords);
+    fn put_coords(&mut self, id: &Uuid, coords: Point) {
+        self.beings.insert(*id, coords);
     }
 
     fn list_all(&self) -> Vec<(&Uuid, &Point)> {

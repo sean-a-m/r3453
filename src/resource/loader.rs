@@ -1,14 +1,16 @@
 use components::objects::{
-    Being, Creature, GameObject, GameType, ImmaterialBeing, VitalBeing, Vitals,
+    Being, ImmaterialBeing, Vitals, GameObjectData, ObjectType, GameObject
 };
+
+use components::objects;
 use uuid::Uuid;
 
 pub enum LoaderType {
-    lVitalBeing(VitalBeing),
-    lImmaterialBeing(ImmaterialBeing),
+    Being(objects::Being),
+    ImmaterialBeing(objects::ImmaterialBeing),
 }
 
-pub fn load_game_type(name: &str) -> Result<(LoaderType, Uuid), &'static str> {
+pub fn load_game_type(name: &str) -> Result<LoaderType, &'static str> {
     match name {
         "player" => Ok(instantiate_player()),
         "wall" => Ok(instantiate_wall()),
@@ -18,63 +20,43 @@ pub fn load_game_type(name: &str) -> Result<(LoaderType, Uuid), &'static str> {
     }
 }
 
-fn instantiate_player() -> (LoaderType, Uuid) {
-    let id: Uuid = Uuid::new_v4();
-    let return_obj = VitalBeing {
-        game_type: GameType::VitalBeing,
-        being: Being {
-            creature: Creature::Player,
-            id: id,
-        },
+fn instantiate_player() -> LoaderType {
+    let return_obj = Being {
+        game_object_data: GameObjectData::new(ObjectType::Player),
         vitals: Vitals {
             physical_integrity: 100,
             spiritual_integrity: 100,
         },
     };
 
-    (LoaderType::lVitalBeing(return_obj), id)
+    LoaderType::Being(return_obj)
 }
 
-fn instantiate_wall() -> (LoaderType, Uuid) {
-    let id: Uuid = Uuid::new_v4();
-    let return_obj = VitalBeing {
-        game_type: GameType::VitalBeing,
-        being: Being {
-            creature: Creature::Wall,
-            id: id,
-        },
+fn instantiate_wall() -> LoaderType {
+    let return_obj = Being {
+        game_object_data: GameObjectData::new(ObjectType::Wall),
         vitals: Vitals {
             physical_integrity: 1000,
             spiritual_integrity: 10000000,
         },
     };
-    (LoaderType::lVitalBeing(return_obj), id)
+    LoaderType::Being(return_obj)
 }
 
-fn instantiate_petromancer() -> (LoaderType, Uuid) {
-    let id: Uuid = Uuid::new_v4();
-    let return_obj = VitalBeing {
-        game_type: GameType::VitalBeing,
-        being: Being {
-            creature: Creature::Petromancer,
-            id: id,
-        },
+fn instantiate_petromancer() -> LoaderType {
+    let return_obj = Being {
+        game_object_data: GameObjectData::new(ObjectType::Petromancer),
         vitals: Vitals {
             physical_integrity: 15,
             spiritual_integrity: 200,
         },
     };
-    (LoaderType::lVitalBeing(return_obj), id)
+    LoaderType::Being(return_obj)
 }
 
-fn instantiate_ghostly_presence() -> (LoaderType, Uuid) {
-    let myid: Uuid = Uuid::new_v4();
+fn instantiate_ghostly_presence() -> LoaderType {
     let return_obj = ImmaterialBeing {
-        game_type: GameType::ImmaterialBeing,
-        being: Being {
-            creature: Creature::GhostlyPresence,
-            id: myid,
-        },
+        game_object_data: GameObjectData::new(ObjectType::GhostlyPresence),
     };
-    (LoaderType::lImmaterialBeing(return_obj), myid)
+    LoaderType::ImmaterialBeing(return_obj)
 }
