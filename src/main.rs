@@ -1,67 +1,40 @@
+#![feature(non_ascii_idents)]
 extern crate uuid;
 
 mod components;
 mod resource;
 
 use components::data::Point;
-use components::objects::{GameObjectData, Localizable, GameObject};
+use components::objects::{GameObject, ObjectType};
 use components::zone::{HashZone, Zone};
 use loader::LoaderType;
 use resource::loader;
+use std::collections::HashMap;
+use uuid::Uuid;
+use components::gamedata::{GameData};
+use components::gameobject::{InstantiatedObject};
 
 fn main() {
-    println!("Starting!");
-    Point { x: 3, y: 4 };
+    let mut game_data = GameData::new();
+    game_data.add_being("player");
+    game_data.add_being("wall");
+    game_data.add_being("petromancer");
+    game_data.add_being("floor");
 
-    let mut game_objects = Vec::new();
-    let mut game_map = HashZone::new();
+    let player_id = game_data.instantiate_localized_being(ObjectType::Player, &Point{x: 0, y: 0});
+    game_data.instantiate_localized_being(ObjectType::Floor, &Point{x: 5, y: 5});
+    game_data.instantiate_localized_being(ObjectType::Wall, &Point{x: 3, y: 7});
+    game_data.instantiate_localized_being(ObjectType::Petromancer, &Point{x: 2, y: 1});
 
-    instantiate_being(&mut game_objects, &mut game_map, "player", &Point { x: 0, y: 0 });
-    instantiate_being(&mut game_objects, &mut game_map, "wall", &Point { x: 2, y: 5 });
-    instantiate_being(&mut game_objects, &mut game_map, "petromancer", &Point { x: 3, y: 4 });
-    instantiate_being(&mut game_objects, &mut game_map, "ghostly_presence", &Point { x: 1, y: 7 });
+    game_data.move_being(&player_id, &Point{x: 10, y: 10});
 
-    for (id, point) in &game_map.list_all() {
-        println!("{}, {:?}", id, point);
+    for (_, boxed_game_object) in game_data.get_beings() {
+        let game_object = &**boxed_game_object;
+        println!("Being entry: it's a {:?}!", game_object.get_type());
     }
 
-    for game_object in &game_objects {
-        match game_object {
-            LoaderType::Being(p) => println!("{}", p.game_object_data.id),
-            LoaderType::ImmaterialBeing(p) => println!("{}", p.game_object_data.id),
-        }
+    for (_, boxed_instantiated_being) in game_data.get_instantiated_beings() {
+        let instantiated_being = &**boxed_instantiated_being;
+        println!("Instantiated being entry: it's a {:?}!  It's id is {}.  It's located at: {:?}", instantiated_being.get_type(), instantiated_being.get_id(), game_data.get_being_location(instantiated_being.get_id()));
     }
-    
-
-    for game_object in &game_objects {
-        match game_object {
-            LoaderType::Being(p) => 
-                println!("It's a Being struct.  It's a {:?}.  It has {:?} physical health and {:?} spiritual health. It's at point {:?}", 
-                p.game_object_data.object_type, p.vitals.physical_integrity, p.vitals.spiritual_integrity, p.get_position(&game_map)),
-            LoaderType::ImmaterialBeing(p) => println!("It's an ImmaterialBeing struct.  It's a {:?}.", p.game_object_data.object_type)
-        }
-    }
-}
-
-fn instantiate_being(
-    game_object_vec: &mut Vec<LoaderType>,
-    zone_vec: &mut HashZone,
-    gtype: &str,
-    point: &Point,
-) -> () {
-    let new_game_object = load_game_object(gtype);
-    match new_game_object{
-        LoaderType::Being(p) => {
-            zone_vec.put_coords(&p.game_object_data.id, *point);
-            game_object_vec.push(LoaderType::Being(p));
-        }
-        LoaderType::ImmaterialBeing(p) => {
-            zone_vec.put_coords(&p.game_object_data.id, *point);
-            game_object_vec.push(LoaderType::ImmaterialBeing(p));
-        }
-    }
-}
-
-fn load_game_object(gtype: &str) -> LoaderType {
-    loader::load_game_type(gtype).unwrap()
 }

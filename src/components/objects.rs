@@ -2,35 +2,43 @@ use super::data::Point;
 use super::zone::Zone;
 use uuid::Uuid;
 
-pub struct GameObjectData {
-    pub id: Uuid,
-    pub object_type: ObjectType,
-}
-
-impl GameObjectData{
-    pub fn new(object_type: ObjectType) -> GameObjectData {
-        GameObjectData {
-            id: Uuid::new_v4(),
-            object_type: object_type,
-        }
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum ObjectType {
     Player,
     Petromancer,
     Wall,
     GhostlyPresence,
+    Floor,
+}
+
+pub enum Alignment {
+    Good,
+    Neutral,
+    Evil,
 }
 
 pub struct Being {
-    pub game_object_data: GameObjectData,
+    pub object_type: ObjectType,
     pub vitals: Vitals,
+    pub physics: Physics,
+    pub alignment: Alignment,
+   // pub movement: Option<Movement>,
+   // pub interactions: Option<Vec<&Interaction>>,
 }
 
+pub struct Movement {
+    pub move_speed: i32,
+}
+
+pub struct Interaction {
+    //TODO!
+    pub move_speed: i32,
+}
+
+
 pub struct ImmaterialBeing {
-    pub game_object_data: GameObjectData,
+    pub object_type: ObjectType,
+    pub alignment: Alignment,
 }
 
 pub struct Vitals {
@@ -38,39 +46,33 @@ pub struct Vitals {
     pub spiritual_integrity: i32,
 }
 
-pub trait Localizable {
-    fn get_position<'a, T: Zone>(&self, this_zone: &'a T) -> &'a Point;
+pub struct Physics {
+    pub matter_state: MatterState,
+    pub weight: f32,
+    pub traversal_cost: i32,
+    pub traversable: bool,
+    pub blocks_sight: bool,
 }
 
-impl Localizable for Being {
-    fn get_position<'a, T: Zone>(&self, this_zone: &'a T) -> &'a Point {
-        this_zone
-            .get_coords(&self.game_object_data.id)
-            .expect(format!("Couldn't locate {}", self.game_object_data.id).as_str())
-    }
+pub enum MatterState {
+    Solid,
+    Liquid,
+    Gas,
+    Plasma,
 }
 
 pub trait GameObject {
-    fn object_type(&self) -> ObjectType;
-    fn id(&self) -> &Uuid;
+    fn get_type(&self) -> ObjectType;
 }
 
 impl GameObject for Being {
-    fn id(&self) -> &Uuid {
-        &self.game_object_data.id
-    }
-
-    fn object_type(&self) -> ObjectType {
-        self.game_object_data.object_type
+    fn get_type(&self) -> ObjectType {
+        self.object_type
     }
 }
 
 impl GameObject for ImmaterialBeing {
-    fn id(&self) -> &Uuid {
-        &self.game_object_data.id
-    }
-
-    fn object_type(&self) -> ObjectType {
-        self.game_object_data.object_type
+    fn get_type(&self) -> ObjectType {
+        self.object_type
     }
 }

@@ -1,22 +1,29 @@
 use super::data::Point;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, hash_map::Iter};
 use uuid::Uuid;
 
 pub trait Zone {
     fn get_coords(&self, id: &Uuid) -> Option<&Point>;
-    fn put_coords(&mut self, id: &Uuid, coords: Point) -> ();
-    fn list_all(&self) -> Vec<(&Uuid, &Point)>;
+    fn put_coords(&mut self, id: &Uuid, coords: &Point) -> ();
+    fn get_at_coords(&self, coords: &Point) -> Option<&HashSet<Uuid>>;
+    fn move_id(&mut self, id: &Uuid, coords: &Point) -> ();
 }
 
 pub struct HashZone {
     pub beings: HashMap<Uuid, Point>,
+    pub locations: HashMap<Point, HashSet<Uuid>>,
 }
 
 impl HashZone {
     pub fn new() -> HashZone {
         HashZone {
             beings: HashMap::new(),
+            locations: HashMap::new(),
         }
+    }
+
+    fn list_all_things(&self) -> Iter<Uuid, Point> {
+        self.beings.iter()
     }
 }
 
@@ -25,16 +32,27 @@ impl Zone for HashZone {
         self.beings.get(id)
     }
 
-    fn put_coords(&mut self, id: &Uuid, coords: Point) {
-        self.beings.insert(*id, coords);
+    fn get_at_coords(&self, coords: &Point) -> Option<&HashSet<Uuid>> {
+        self.locations.get(coords)
     }
 
-    fn list_all(&self) -> Vec<(&Uuid, &Point)> {
-        let mut all_beings = Vec::new();
-        for (k, v) in &self.beings {
-            //Convert string to reference, lifetime is ok since my vec will exist for a while...I hope
-            all_beings.push((k, v));
+    fn put_coords(&mut self, id: &Uuid, coords: &Point) {
+        self.beings.insert(*id, *coords);
+        self.locations
+            .entry(*coords)
+            .or_insert_with(|| HashSet::new())
+            .insert(*id);
+    }
+
+    fn move_id(&mut self, id: &Uuid, coords: &Point) -> () {
+        match self.beings.get(id) {
+            Some(point) => {
+                self.locations.get_mut(point)
+                    .unwrap()
+                    .remove(id);
+            },
+            None => {},
         }
-        return all_beings;
+        self.put_coords(id, coords);
     }
 }
